@@ -35,6 +35,7 @@ jspm_packages/
 /dist/
 !/.eslintrc.json
 /build/
+app/build/
 !/project.json
 .terragrunt*
 /test-reports
