@@ -13,25 +13,16 @@ provider "aws" {
 }
 
 
-resource "aws_vpc" "main" {
+resource "aws_vpc" "CustomVPC" {
   cidr_block = "10.0.0.0/16"
 }
 
-resource "aws_subnet" "main" {
+resource "aws_subnet" "PublicSubnet1" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.4.0/24"
 
   tags = {
     Name = "PublicSubnet1"
-  }
-}
-
-resource "aws_subnet" "main2" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.5.0/24"
-
-  tags = {
-    Name = "PrivateSubnet1"
   }
 }
 
