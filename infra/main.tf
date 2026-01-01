@@ -15,27 +15,31 @@ provider "aws" {
 
 resource "aws_vpc" "CustomVPC" {
   cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = "Custom-VPC"
+  }
 }
 
 resource "aws_subnet" "PublicSubnet1" {
-  vpc_id     = aws_vpc.main.id
+  vpc_id     = aws_vpc.CustomVPC.id
   cidr_block = "10.0.4.0/24"
 
   tags = {
-    Name = "PublicSubnet1"
+    Name = "Public-Subnet1"
   }
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.CustomVPC.id
 
   tags = {
     Name = "igw"
   }
 }
 
-resource "aws_route_table" "public-route-table" {
-  vpc_id = aws_vpc.main.id
+resource "aws_route_table" "public_route_table" {
+  vpc_id = aws_vpc.CustomVPC.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -48,8 +52,46 @@ tags     = {
   
 }
 
-resource "aws_route_table_association" "publicsubnet-route-association" {
-  subnet_id      = aws_subnet.main.id
-  route_table_id = aws_route_table.public-route-table.id
+resource "aws_route_table_association" "public-route-association" {
+  subnet_id      = aws_subnet.PublicSubnet1.id
+  route_table_id = aws_route_table.public_route_table.id
 }
 
+resource "aws_subnet" "PrivateSubnet1" {
+  vpc_id     = aws_vpc.CustomVPC.id
+  cidr_block = "10.0.5.0/24"
+
+  tags = {
+    Name = "Private-Subnet1"
+  }
+}
+
+resource "aws_eip" "nat_eip" {
+ domain = "vpc"
+
+}
+resource "aws_nat_gateway" "Nat_gw" {
+  allocation_id = aws_eip.nat_eip.allocation_id
+  subnet_id = aws_subnet.PublicSubnet1.id
+}
+
+
+resource "aws_route_table" "Priv_RT" {
+
+  vpc_id = aws_vpc.CustomVPC.id
+  route {
+
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.Nat_gw.id
+
+  }
+
+}
+
+
+resource "aws_route_table_association" "private_route_association" {
+
+  subnet_id      = aws_subnet.PrivateSubnet1.id
+  route_table_id = aws_route_table.Priv_RT.id
+
+}
