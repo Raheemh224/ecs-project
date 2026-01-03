@@ -175,3 +175,55 @@ policy = jsonencode({
     }]
   })
 }
+
+resource "aws_ecs_cluster" "ThreatComposer" {
+  name = "Threat-Composer"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "ecs_app_logs" {
+  name              = "/ecs/ecsapplogs"
+  retention_in_days = 7
+}
+
+data "aws_caller_identity" "current" {}
+resource "aws_ecs_task_definition" "task_definition" {
+  family                   = "TC-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+
+   execution_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole"
+  task_role_arn      = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskRole"
+
+  container_definitions = jsonencode([
+    {
+      name      = "ecsapp"
+      image     = "789150471589.dkr.ecr.eu-west-2.amazonaws.com/ecsapp"
+      cpu       = 256
+      memory    = 512
+      essential = true
+      portMappings = [
+        {
+          containerPort = 3000
+          hostPort      = 3000
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/ecsapplogs"
+          "awslogs-region"        = "eu-west-2"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+}
