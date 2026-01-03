@@ -148,3 +148,30 @@ resource "aws_lb" "alb-app" {
 
 }
 
+resource "aws_ecr_repository" "tc_repo" {
+  name                 = "tc_repo"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+}
+resource "aws_ecr_repository_policy" "tc_policy" {
+  repository = aws_ecr_repository.tc_repo.name
+
+policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Expire old images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = {
+        type = "expire"
+      }
+    }]
+  })
+}
