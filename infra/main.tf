@@ -148,8 +148,8 @@ resource "aws_lb" "alb-app" {
 
 }
 
-resource "aws_ecr_repository" "tc_repo" {
-  name                 = "tc_repo"
+resource "aws_ecr_repository" "ecsapp" {
+  name                 = "ecsapp"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -157,8 +157,8 @@ resource "aws_ecr_repository" "tc_repo" {
   }
   
 }
-resource "aws_ecr_repository_policy" "tc_policy" {
-  repository = aws_ecr_repository.tc_repo.name
+resource "aws_ecr_repository_policy" "ecsapp_policy" {
+  repository = aws_ecr_repository.ecsapp.name
 
 policy = jsonencode({
     rules = [{
