@@ -24,12 +24,23 @@ resource "aws_vpc" "CustomVPC" {
 resource "aws_subnet" "PublicSubnet1" {
   vpc_id     = aws_vpc.CustomVPC.id
   cidr_block = "10.0.4.0/24"
+  availability_zone = "eu-west-2a"
 
   tags = {
     Name = "Public-Subnet1"
   }
 }
 
+resource "aws_subnet" "PublicSubnet2" {
+  vpc_id     = aws_vpc.CustomVPC.id
+  cidr_block = "10.0.5.0/24"
+  availability_zone = "eu-west-2b"
+
+
+  tags = {
+    Name = "Public-Subnet2"
+  }
+}
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.CustomVPC.id
 
@@ -57,9 +68,13 @@ resource "aws_route_table_association" "public-route-association" {
   route_table_id = aws_route_table.public_route_table.id
 }
 
+resource "aws_route_table_association" "public-route-association2" {
+  subnet_id      = aws_subnet.PublicSubnet2.id
+  route_table_id = aws_route_table.public_route_table.id
+}
 resource "aws_subnet" "PrivateSubnet1" {
   vpc_id     = aws_vpc.CustomVPC.id
-  cidr_block = "10.0.5.0/24"
+  cidr_block = "10.0.6.0/24"
 
   tags = {
     Name = "Private-Subnet1"
@@ -122,6 +137,14 @@ resource "aws_vpc_security_group_ingress_rule" "http" {
   to_port           = 80
 }
 
+resource "aws_lb" "alb-app" {
+  name               = "alb-app"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.ALB_SG.id]
+  subnets = [ aws_subnet.PublicSubnet1.id,aws_subnet.PublicSubnet2.id]
 
+  enable_deletion_protection = true
 
+}
 
