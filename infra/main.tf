@@ -89,7 +89,7 @@ resource "aws_nat_gateway" "Nat_gw" {
   allocation_id = aws_eip.nat_eip.allocation_id
   subnet_id = aws_subnet.PublicSubnet1.id
 
-  depends_on = [aws_internet_gateway.gw.id]
+  depends_on = [aws_internet_gateway.gw]
 }
 
 
@@ -122,7 +122,7 @@ resource "aws_subnet" "PrivateSubnet2" {
   }
 }
 
-resource "aws_route_table_association" "private_route_association" {
+resource "aws_route_table_association" "private_route_association2" {
 
   subnet_id      = aws_subnet.PrivateSubnet2.id
   route_table_id = aws_route_table.Priv_RT.id
@@ -144,6 +144,14 @@ resource "aws_vpc_security_group_ingress_rule" "https" {
   from_port         = 443
   ip_protocol       = "tcp"
   to_port           = 443
+}
+
+resource "aws_vpc_security_group_ingress_rule" "custom" {
+  security_group_id = aws_security_group.ALB_SG.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 3000
+  ip_protocol       = "tcp"
+  to_port           = 3000
 }
 
 resource "aws_vpc_security_group_ingress_rule" "http" {
@@ -169,28 +177,24 @@ resource "aws_lb" "alb-app" {
   enable_deletion_protection = true
 
 }
-resource "aws_lb_listener" "alb_listener" {
+
+
+resource "aws_lb_target_group" "alb_tg" {
+  name        = "alb-tg"
+  port        = 3000
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.CustomVPC.id
+}
+resource "aws_lb_listener" "port80" {
   load_balancer_arn = aws_lb.alb-app.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.ECSTG.arn
   }
-}
-
-resource "aws_lb_target_group" "alb_tg" {
-  name        = "alb_tg"
-  port        = 3000
-  protocol    = "HTTP"
-  target_type = "ip"
-  vpc_id      = aws_vpc.CustomVPC.id
 }
 
 resource "aws_ecr_repository" "ecsapp" {
@@ -220,6 +224,13 @@ resource "aws_ecr_lifecycle_policy" "repo_policy" {
     }]
   })
 }
+resource "aws_lb_target_group" "ECSTG"{
+  name        = "ECSTG"
+  port        = 3000
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.CustomVPC.id
+}
 resource "aws_ecs_cluster" "ThreatComposer" {
   name = "Threat-Composer"
 
@@ -235,6 +246,38 @@ resource "aws_cloudwatch_log_group" "ecs_app_logs" {
 }
 
 data "aws_caller_identity" "current" {}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name = "ecsTaskRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "ecsTaskExecutionRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_attach" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
 resource "aws_ecs_task_definition" "task_definition" {
   family                   = "TC-task"
   network_mode             = "awsvpc"
@@ -242,8 +285,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   cpu                      = "256"
   memory                   = "512"
 
-   execution_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole"
-  task_role_arn      = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskRole"
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn      = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -259,7 +302,6 @@ resource "aws_ecs_task_definition" "task_definition" {
           protocol      = "tcp"
         }
       ]
-
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -296,6 +338,14 @@ ingress {
 }
 
 resource "aws_ecs_service" "ECS_Service" {
+
+  depends_on = [
+    aws_iam_role.ecs_task_role,
+    aws_iam_role.ecs_task_execution_role,
+    aws_iam_role_policy_attachment.ecs_task_execution_attach,
+    aws_ecs_task_definition.task_definition
+  ]
+
   name            = "ECS_Service"
   cluster         = aws_ecs_cluster.ThreatComposer.id
   task_definition = aws_ecs_task_definition.task_definition.arn
@@ -303,17 +353,16 @@ resource "aws_ecs_service" "ECS_Service" {
   launch_type = "FARGATE"
 
   network_configuration {
-  subnets         = [aws_subnet.PrivateSubnet1.id,aws_subnet.PrivateSubnet2]
+  subnets         = [aws_subnet.PrivateSubnet1.id,aws_subnet.PrivateSubnet2.id]
   security_groups = [aws_security_group.ecs_task_sg.id]
   assign_public_ip = false
 }
 
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.alb_tg.arn
+    target_group_arn = aws_lb_target_group.ECSTG.arn
     container_name   = "ecsapp"
     container_port   = 3000
   }
 
 }
-  
