@@ -384,8 +384,8 @@ resource "aws_lb_listener" "alb_listener" {
 }
 
 resource "aws_acm_certificate" "acm_cert" {
-  domain_name               = "raheemscustomdomain.com"
-  subject_alternative_names = ["tm.raheemscustomdomain"]
+  domain_name               = "raheemscustomdomain.co.uk"
+  subject_alternative_names = ["tm.raheemscustomdomain.co.uk"]
   validation_method         = "DNS"
 
 
@@ -412,7 +412,7 @@ resource "aws_lb_listener_certificate" "listener_cert" {
 }
 
 resource "aws_route53_zone" "route53_zone" {
-  name = "raheemscustomdomain.com"
+  name = "raheemscustomdomain.co.uk"
 }
 
 resource "aws_route53_record" "route53_record" {
@@ -428,10 +428,21 @@ resource "aws_route53_record" "route53_record" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.route53_zone.zone_id
+  zone_id         = aws_route53_zone.route53_zone.zone_id
 }
 
 resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn         = aws_acm_certificate.acm_cert.arn
   validation_record_fqdns = [for record in aws_route53_record.route53_record : record.fqdn]
+}
+
+resource "aws_route53_record" "Alias" {
+  zone_id = aws_route53_zone.route53_zone.zone_id
+  type    = "A"
+  name    = "tm.raheemscustomdomain.co.uk"
+  alias {
+    name                   = aws_lb.alb-app.dns_name
+    zone_id                = aws_lb.alb-app.zone_id
+    evaluate_target_health = false
+  }
 }
