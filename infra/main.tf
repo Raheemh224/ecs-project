@@ -410,3 +410,19 @@ resource "aws_lb_listener_certificate" "listener_cert" {
   listener_arn    = aws_lb_listener.HTTPS_listner.arn
   certificate_arn = aws_acm_certificate.acm_cert.arn
 }
+
+resource "aws_route53_zone" "route53_zone" {
+  name = "raheemscustomdomain.com"
+}
+
+resource "aws_route53_record" "route53_record" {
+  zone_id = data.aws_route53_zone.route53_zone.zone_id
+  name    = "tm.raheemscustomdomain"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.alb-app.dns_name
+    zone_id                = aws_lb.alb-app.zone_id
+    evaluate_target_health = true
+  }
+}
