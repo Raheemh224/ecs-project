@@ -176,6 +176,12 @@ resource "aws_lb_target_group" "ECS_TG"{
   target_type = "ip"
   vpc_id      = aws_vpc.CustomVPC.id
 }
+
+resource "aws_lb_target_group_attachment" "ecs_tg_attachment" {
+  target_group_arn = aws_lb_target_group.ECS_TG.arn
+  target_id        = aws_lb.alb-app.arn
+  port             = 80
+}
 resource "aws_ecs_cluster" "ThreatComposer" {
   name = "Threat-Composer"
 
@@ -259,29 +265,31 @@ resource "aws_ecs_task_definition" "task_definition" {
   ])
 }
 
-resource "aws_security_group" "ecs_task_sg" {
-  name        = "ecs_task_sg"
-  description = "Allow inbound access"
+
+
+resource "aws_security_group" "ecstask_sg" {
+  name        = "ecstask-sg"
+  description = "container port traffic"
   vpc_id      = aws_vpc.CustomVPC.id
-
-ingress {
-    from_port                = 3000
-    to_port                  = 3000
-    protocol                 = "tcp"
-    security_groups          = [aws_security_group.ALB_SG.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  
   tags = {
-    Name = "ecs_task_sg"
+    Name = "ecstask-sg"
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "ecssg_ingress" {
+  security_group_id = aws_security_group.ecstask_sg.id
+  referenced_security_group_id = aws_lb.alb-app.id
+  from_port   = 3000
+  ip_protocol = "tcp"
+  to_port     = 3000
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic" {
+  security_group_id = aws_security_group.ecstask_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1" # semantically equivalent to all ports
+}
 resource "aws_ecs_service" "ECS_Service" {
 
   depends_on = [
