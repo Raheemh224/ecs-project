@@ -72,62 +72,7 @@ resource "aws_route_table_association" "public-route-association2" {
   subnet_id      = aws_subnet.PublicSubnet2.id
   route_table_id = aws_route_table.public_route_table.id
 }
-resource "aws_subnet" "PrivateSubnet1" {
-  vpc_id     = aws_vpc.CustomVPC.id
-  cidr_block = "10.0.6.0/24"
 
-  tags = {
-    Name = "Private-Subnet1"
-  }
-}
-
-resource "aws_eip" "nat_eip" {
- domain = "vpc"
-
-}
-resource "aws_nat_gateway" "Nat_gw" {
-  allocation_id = aws_eip.nat_eip.allocation_id
-  subnet_id = aws_subnet.PublicSubnet1.id
-
-  depends_on = [aws_internet_gateway.gw]
-}
-
-
-resource "aws_route_table" "Priv_RT" {
-
-  vpc_id = aws_vpc.CustomVPC.id
-  route {
-
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.Nat_gw.id
-
-  }
-
-}
-
-
-resource "aws_route_table_association" "private_route_association" {
-
-  subnet_id      = aws_subnet.PrivateSubnet1.id
-  route_table_id = aws_route_table.Priv_RT.id
-
-}
-
-resource "aws_subnet" "PrivateSubnet2" {
-  vpc_id     = aws_vpc.CustomVPC.id
-  cidr_block = "10.0.7.0/24"
-
-  tags = {
-    Name = "Private-Subnet2"
-  }
-}
-
-resource "aws_route_table_association" "private_route_association2" {
-
-  subnet_id      = aws_subnet.PrivateSubnet2.id
-  route_table_id = aws_route_table.Priv_RT.id
-
-}
 resource "aws_security_group" "ALB_SG" {
   name        = "ALB_SG"
   description = "Security group for ALB"
@@ -224,7 +169,7 @@ resource "aws_ecr_lifecycle_policy" "repo_policy" {
     }]
   })
 }
-resource "aws_lb_target_group" "ECSTG"{
+resource "aws_lb_target_group" "ECS_TG"{
   name        = "ECSTG"
   port        = 3000
   protocol    = "HTTP"
@@ -353,14 +298,14 @@ resource "aws_ecs_service" "ECS_Service" {
   launch_type = "FARGATE"
 
   network_configuration {
-  subnets         = [aws_subnet.PrivateSubnet1.id,aws_subnet.PrivateSubnet2.id]
+  subnets         = [aws_subnet.PublicSubnet1.id,aws_subnet.PublicSubnet2.id]
   security_groups = [aws_security_group.ecs_task_sg.id]
   assign_public_ip = false
 }
 
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.ECSTG.arn
+    target_group_arn = aws_lb_target_group.ECS_TG.arn
     container_name   = "ecsapp"
     container_port   = 3000
   }
@@ -411,7 +356,7 @@ resource "aws_lb_listener_certificate" "listener_cert" {
   certificate_arn = aws_acm_certificate.acm_cert.arn
 }
 
-resource "aws_route53_zone" "route53_zone" {
+data "aws_route53_zone" "route53_zone" {
   name = "raheemscustomdomain.co.uk"
 }
 
@@ -428,7 +373,7 @@ resource "aws_route53_record" "route53_record" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.route53_zone.zone_id
+  zone_id         = data.aws_route53_zone.route53_zone.zone_id
 }
 
 resource "aws_acm_certificate_validation" "cert_validation" {
@@ -437,7 +382,7 @@ resource "aws_acm_certificate_validation" "cert_validation" {
 }
 
 resource "aws_route53_record" "Alias" {
-  zone_id = aws_route53_zone.route53_zone.zone_id
+  zone_id = data.aws_route53_zone.route53_zone.zone_id
   type    = "A"
   name    = "tm.raheemscustomdomain.co.uk"
   alias {
