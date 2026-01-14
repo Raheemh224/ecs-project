@@ -1,7 +1,7 @@
 resource "aws_security_group" "ALB_SG" {
   name        = "ALB_SG"
   description = "Security group for ALB"
-  vpc_id      = aws_vpc.CustomVPC.id
+  vpc_id      = aws_vpc.ecsapp_vpc.id
 
   tags = {
     Name = "ALB-SG"
@@ -47,7 +47,7 @@ resource "aws_lb_target_group" "alb_tg" {
   port        = 3000
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = aws_vpc.CustomVPC.id
+  vpc_id      = aws_vpc.ecsapp_vpc.id
 
 }
 

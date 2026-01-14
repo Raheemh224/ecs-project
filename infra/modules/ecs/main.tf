@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 resource "aws_security_group" "ecstask_sg" {
   name        = "ecstask-sg"
   description = "container port traffic"
-  vpc_id      = aws_vpc.CustomVPC.id
+  vpc_id      = aws_vpc.ecsapp_vpc.id
   
   tags = {
     Name = "ecstask-sg"

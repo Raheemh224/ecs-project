@@ -1,13 +1,13 @@
-resource "aws_vpc" "CustomVPC" {
+resource "aws_vpc" "ecsapp_vpc" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "Custom-VPC"
+    Name = "ecsapp_vpc"
   }
 }
 
 resource "aws_subnet" "PublicSubnet1" {
-  vpc_id     = aws_vpc.CustomVPC.id
+  vpc_id     = aws_vpc.ecsapp_vpc.id
   cidr_block = "10.0.4.0/24"
   availability_zone = "eu-west-2a"
 
@@ -17,7 +17,7 @@ resource "aws_subnet" "PublicSubnet1" {
 }
 
 resource "aws_subnet" "PublicSubnet2" {
-  vpc_id     = aws_vpc.CustomVPC.id
+  vpc_id     = aws_vpc.ecsapp_vpc.id
   cidr_block = "10.0.5.0/24"
   availability_zone = "eu-west-2b"
 
@@ -27,7 +27,7 @@ resource "aws_subnet" "PublicSubnet2" {
   }
 }
 resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.CustomVPC.id
+  vpc_id = aws_vpc.ecsapp_vpc.id
 
   tags = {
     Name = "igw"
@@ -35,7 +35,7 @@ resource "aws_internet_gateway" "gw" {
 }
 
 resource "aws_route_table" "public_route_table" {
-  vpc_id = aws_vpc.CustomVPC.id
+  vpc_id = aws_vpc.ecsapp_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
