@@ -29,3 +29,21 @@ variable "app_port" {
   type = string
   default = "3000"
 }
+
+
+variable "all_traffic" {
+  type = string
+  default = "0.0.0.0/0"
+}
+
+variable "cpu" {
+  type = string
+  description = "cpu for task definition"
+  default = "256"
+}
+  
+variable "memory" {
+  type = string
+  description = "memory for task definition"
+  default = "512"
+}

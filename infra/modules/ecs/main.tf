@@ -49,8 +49,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   family                   = "TC-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = var.cpu
+  memory                   = var.memory
 
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn      = aws_iam_role.ecs_task_role.arn
@@ -103,7 +103,7 @@ resource "aws_vpc_security_group_ingress_rule" "ecssg_ingress" {
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic" {
   security_group_id = aws_security_group.ecstask_sg.id
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = var.all_traffic
   ip_protocol       = "-1" # semantically equivalent to all ports
 }
 resource "aws_ecs_service" "ECS_Service" {
@@ -123,7 +123,7 @@ resource "aws_ecs_service" "ECS_Service" {
 
   network_configuration {
   subnets         = [var.publicsubnet1,var.publicsubnet2]
-  security_groups = [aws_security_group.ecstask_sg.id]
+  security_groups = [aws_security_group.ecstask_sg]
   assign_public_ip = false
 }
 
