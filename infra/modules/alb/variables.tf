@@ -27,3 +27,9 @@ variable "vpc_subnet2_id" {
     description = "ID for 2nd Subnet"
   
 }
+
+variable "certificate_arn" {
+     type = string
+     description = "arn for the certificate"
+
+}

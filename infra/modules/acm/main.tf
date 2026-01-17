@@ -8,26 +8,9 @@ resource "aws_acm_certificate" "acm_cert" {
     create_before_destroy = true
   }
 }
-resource "aws_lb_listener" "HTTPS_listner" {
-  load_balancer_arn = aws_lb.alb-app.arn
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = aws_acm_certificate.acm_cert.arn
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.alb_tg.arn
-  }
-}
-
-resource "aws_lb_listener_certificate" "listener_cert" {
-  listener_arn    = aws_lb_listener.HTTPS_listner.arn
-  certificate_arn = aws_acm_certificate.acm_cert.arn
-}
 
 data "aws_route53_zone" "route53_zone" {
-  name = "raheemscustomdomain.co.uk"
+  name = var.domain_name
 }
 
 resource "aws_route53_record" "route53_record" {
@@ -53,11 +36,11 @@ resource "aws_acm_certificate_validation" "cert_validation" {
 
 resource "aws_route53_record" "Alias" {
   zone_id = data.aws_route53_zone.route53_zone.zone_id
-  type    = "A"
-  name    = "tm.raheemscustomdomain.co.uk"
+  type    = var.record_type
+  name    = var.record_name
   alias {
-    name                   = aws_lb.alb-app.dns_name
-    zone_id                = aws_lb.alb-app.zone_id
+    name                   = var.dns_name
+    zone_id                = var.alb_zone_id
     evaluate_target_health = false
   }
 }

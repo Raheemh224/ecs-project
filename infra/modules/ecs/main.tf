@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 resource "aws_security_group" "ecstask_sg" {
   name        = "ecstask-sg"
   description = "container port traffic"
-  vpc_id      = aws_vpc.CustomVPC.id
+  vpc_id      = var.vpc_id
   
   tags = {
     Name = "ecstask-sg"
@@ -95,7 +95,7 @@ resource "aws_security_group" "ecstask_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "ecssg_ingress" {
   security_group_id = aws_security_group.ecstask_sg.id
-  referenced_security_group_id = aws_security_group.ALB_SG.id
+  referenced_security_group_id = var.alb_sg_id
   from_port   = 3000
   ip_protocol = "tcp"
   to_port     = 3000
@@ -122,16 +122,16 @@ resource "aws_ecs_service" "ECS_Service" {
   launch_type = "FARGATE"
 
   network_configuration {
-  subnets         = [aws_subnet.PublicSubnet1.id,aws_subnet.PublicSubnet2.id]
+  subnets         = [var.publicsubnet1,var.publicsubnet2]
   security_groups = [aws_security_group.ecstask_sg.id]
   assign_public_ip = false
 }
 
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.alb_tg.arn
-    container_name   = "ecsapp"
-    container_port   = 3000
+    target_group_arn = var.albtg_arn
+    container_name   = var.app_name
+    container_port   = var.app_port
   }
 
 }
