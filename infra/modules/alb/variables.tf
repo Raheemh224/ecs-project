@@ -33,3 +33,8 @@ variable "certificate_arn" {
      description = "arn for the certificate"
 
 }
+
+variable "ssl_policy" {
+  type = string
+  default = "ELBSecurityPolicy-2016-08"
+}
