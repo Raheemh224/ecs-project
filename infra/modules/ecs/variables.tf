@@ -47,3 +47,21 @@ variable "memory" {
   description = "memory for task definition"
   default = "512"
 }
+
+variable "execution_role_arn" {
+  type = string
+}
+
+variable "task_role_arn" {
+  type = string
+}
+
+variable "container_name1" {
+  type = string
+  default = "ecsapp"
+}
+
+variable "app_image1" {
+  type = string
+  default = "789150471589.dkr.ecr.eu-west-2.amazonaws.com/ecsapp"
+}

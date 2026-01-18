@@ -22,7 +22,8 @@ module "ecs" {
   publicsubnet2 = module.vpc.public_subnet2_id
   alb_sg_id = module.alb.alb_sg_id
   vpc_id = module.vpc.vpc_id
-
+  task_role_arn = module.ecs.task_role_arn
+  execution_role_arn = module.ecs.execution_role_arn
 }
 
 module "acm" {

@@ -52,15 +52,13 @@ resource "aws_ecs_task_definition" "task_definition" {
   cpu                      = var.cpu
   memory                   = var.memory
 
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn      = aws_iam_role.ecs_task_role.arn
+  execution_role_arn = var.execution_role_arn
+  task_role_arn      = var.task_role_arn
 
   container_definitions = jsonencode([
     {
-      name      = "ecsapp"
-      image     = "789150471589.dkr.ecr.eu-west-2.amazonaws.com/ecsapp"
-      cpu       = 256
-      memory    = 512
+      name      = var.container_name1
+      image     = var.app_image1
       essential = true
       portMappings = [
         {
@@ -123,7 +121,7 @@ resource "aws_ecs_service" "ECS_Service" {
 
   network_configuration {
   subnets         = [var.publicsubnet1,var.publicsubnet2]
-  security_groups = [aws_security_group.ecstask_sg]
+  security_groups = [aws_security_group.ecstask_sg.id]
   assign_public_ip = false
 }
 

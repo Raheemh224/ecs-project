@@ -3,7 +3,7 @@ output "alb_id" {
 }
 
 output "alb_sg_id" {
-  value = aws_security_group.ALB_SG
+  value = aws_security_group.ALB_SG.id
 }
 
 output "alb_tg" {
