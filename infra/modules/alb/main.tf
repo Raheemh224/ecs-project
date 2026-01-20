@@ -49,6 +49,15 @@ resource "aws_lb_target_group" "alb_tg" {
   target_type = "ip"
   vpc_id      = var.vpc_id
 
+  health_check {
+    path                = var.health_path
+    matcher             = var.health_matcher
+    interval            = var.health_interval
+    timeout             = var.health_timeout
+    healthy_threshold   = var.healthy_threshold
+    unhealthy_threshold = var.unhealthy_threshold
+  }
+
 }
 
 resource "aws_lb_listener" "alb_listener" {

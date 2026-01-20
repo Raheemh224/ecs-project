@@ -63,5 +63,5 @@ variable "container_name1" {
 
 variable "app_image1" {
   type = string
-  default = "789150471589.dkr.ecr.eu-west-2.amazonaws.com/ecsapp"
+  default = "789150471589.dkr.ecr.eu-west-2.amazonaws.com/ecsapp:latest"
 }
