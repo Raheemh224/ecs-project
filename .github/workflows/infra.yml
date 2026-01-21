@@ -1,0 +1,41 @@
+name: Terraform Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run: ./infra
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup@v1
+        with:
+          terraform_version: 1.8.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{secrets.AWS_REGION}}
+      
+      - name: Initialise Terraform
+      - run: terraform init 
+      - name: Terraform fmt
+      - run : terraform fmt
+      - name: Terraform validate
+      - run: terraform validate
+      - name: Terraform Plan
+      - run: terraform plan 
+      - name: Terraform apply -auto-approve
+
