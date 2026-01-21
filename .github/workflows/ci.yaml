@@ -3,9 +3,9 @@ name : push Docker image to ECR
 on:
     workflow_dispatch:
       inputs:
-        confirmation:
-          description:'Type "yes" to push image'
-          
+        docker-push:
+          description: 'Type "yes" to push image'
+          type: string
 
 jobs:
   build:
