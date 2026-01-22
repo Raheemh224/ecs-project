@@ -1,0 +1,46 @@
+name: Destroy resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm-destroy:
+        description: 'Type "yes" to confirm destruction of resources'
+        required: true
+        type: string
+
+jobs:
+  terraform_destroy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm-destroy == 'yes'
+
+    defaults:
+      run:
+        working-directory: ./infra
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.8.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform destroy
+        run: |
+          terraform destroy \
+            -target=module.ecs \
+            -target=module.alb \
+            -target=module.vpc \
+            -target=module.acm \
+            -auto-approve
