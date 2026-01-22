@@ -31,12 +31,17 @@ jobs:
           aws-region: ${{secrets.AWS_REGION}}
       
       - name: Initialise Terraform
-      - run: terraform init 
+        run: terraform init 
+
       - name: Terraform fmt
-      - run : terraform fmt
+        run : terraform fmt
+
       - name: Terraform validate
-      - run: terraform validate
+        run: terraform validate
+
       - name: Terraform Plan
-      - run: terraform plan 
+        run: terraform plan 
+
       - name: Terraform apply -auto-approve
+        run: terraform apply -auto-approve
 
