@@ -5,7 +5,7 @@ resource "aws_lb" "alb-app" {
   security_groups    = [aws_security_group.ALB_SG.id]
   subnets = [ var.vpc_subnet1_id,var.vpc_subnet2_id]
 
-  enable_deletion_protection = true
+  enable_deletion_protection = false
 
 }
 
