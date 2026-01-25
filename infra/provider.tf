@@ -6,12 +6,14 @@ terraform {
     }
   }
 
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.6.0"
 
   backend "s3" {
     bucket  = "threat-model-project"
     key     = "terraform.tfstate"
     region  = "eu-west-2"
+    use_lockfile = true
+    encrypt = true
   }
 }
 
